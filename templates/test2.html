@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test 2 — With Background Music | APSP Research</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <span class="project-label">Advanced Probability &amp; Stochastic Processes — Research Project</span>
+    <h1>Test 2 — With Background Music</h1>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Step indicator -->
+  <div class="step-indicator">
+    <div class="step-item done">① Home</div>
+    <div class="step-item done">② Test 1 — Silence</div>
+    <div class="step-item done">③ Break</div>
+    <div class="step-item active">④ Test 2 — Music</div>
+    <div class="step-item">⑤ Results</div>
+  </div>
+
+  <!-- Instruction notice -->
+  <div class="notice">
+    <strong>Music condition.</strong> Complete this test with the background music
+    playing at a <strong>comfortable, moderate volume</strong>. Use the player below
+    to start the music — do not autoplay. Answer each question as carefully as you
+    can. The test auto-submits when the timer reaches zero.
+  </div>
+
+  <!-- Music player -->
+  <div class="music-player">
+    <!-- Audio element — no autoplay -->
+    <audio id="study-audio" loop preload="auto">
+      <!--
+        Place an instrumental study music file (MP3 or OGG) in:
+            static/audio/study_music.mp3
+        Then uncomment the source line below.
+        Free royalty-free options: pixabay.com, freemusicarchive.org
+      -->
+      <!-- <source src="{{ url_for('static', filename='audio/study_music.mp3') }}" type="audio/mpeg"> -->
+      Your browser does not support the audio element.
+    </audio>
+
+    <div class="music-info">
+      <div class="music-title">🎵 Instrumental Study Music</div>
+      <div class="music-note">
+        Set your volume to a moderate level before pressing Play.
+        Keep the volume constant throughout the test.
+      </div>
+    </div>
+
+    <div class="music-controls">
+      <button id="music-toggle" type="button">▶ Play Music</button>
+      <span class="volume-label">Vol: moderate</span>
+    </div>
+  </div>
+
+  <!-- Timer -->
+  <div class="timer-bar">
+    <div>
+      <div class="timer-label">Time Remaining</div>
+      <div class="timer-display" id="timer-display">20:00</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="timer-label">Form B &nbsp;|&nbsp; 20 questions</div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-row">
+    <span class="progress-label">
+      Answered: <strong><span id="answered-count">0</span> / {{ questions|length }}</strong>
+    </span>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Question dots -->
+  <div class="question-dots">
+    {% for q in questions %}
+    <div class="q-dot {% if loop.index0 == 0 %}current{% endif %}"
+         data-qid="{{ q.id }}"
+         title="Question {{ loop.index }}">{{ loop.index }}</div>
+    {% endfor %}
+  </div>
+
+  <!-- Questions -->
+  <div id="questions-container">
+    {% for q in questions %}
+    <div class="question-card"
+         data-qid="{{ q.id }}"
+         style="display:{% if loop.index0 == 0 %}block{% else %}none{% endif %}">
+
+      <div class="question-meta">
+        Question {{ loop.index }} of {{ questions|length }}
+        &nbsp;&middot;&nbsp; {{ q.category }}
+      </div>
+
+      <p class="question-text">{{ q.text }}</p>
+
+      <ul class="options-list">
+        {% for option in q.options %}
+        <li class="option-item">
+          <label>
+            <input type="radio"
+                   name="q_{{ q.id }}"
+                   value="{{ option }}" />
+            <span>{{ option }}</span>
+          </label>
+        </li>
+        {% endfor %}
+      </ul>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Navigation -->
+  <div class="nav-row">
+    <button class="btn btn-secondary" id="btn-prev" disabled>← Previous</button>
+    <button class="btn btn-primary"   id="btn-submit">Submit Test 2</button>
+    <button class="btn btn-secondary" id="btn-next">Next →</button>
+  </div>
+
+</main>
+
+<!-- Pass config to JS -->
+<script>
+  window.TEST_CONFIG = {
+    submitUrl:        "{{ url_for('submit_test2') }}",
+    totalQuestions:   {{ questions|length }},
+    timeLimitSeconds: 1200
+  };
+</script>
+<script src="{{ url_for('static', filename='js/test.js') }}"></script>
+
+</body>
+</html>

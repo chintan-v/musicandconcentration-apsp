@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Break | APSP Research</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <span class="project-label">Advanced Probability &amp; Stochastic Processes — Research Project</span>
+    <h1>Short Break</h1>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Step indicator -->
+  <div class="step-indicator">
+    <div class="step-item done">① Home</div>
+    <div class="step-item done">② Test 1 — Silence</div>
+    <div class="step-item active">③ Break</div>
+    <div class="step-item">④ Test 2 — Music</div>
+    <div class="step-item">⑤ Results</div>
+  </div>
+
+  <div class="card" style="text-align:center; padding: 2.5rem 2rem;">
+    <h2>Test 1 Complete ✓</h2>
+    <p class="mt-2">Well done! Please take a short break before starting Test 2.</p>
+    <p>
+      Rest for at least <strong>2 minutes</strong>. Stand up, stretch,
+      and give your eyes a moment to rest.
+    </p>
+  </div>
+
+  <div class="notice">
+    <strong>Before you start Test 2:</strong> Make sure you have headphones or
+    speakers available. Test 2 includes an instrumental background music track.
+    Set your volume to a <strong>comfortable, moderate level</strong> before pressing
+    Play — do not adjust it during the test.
+  </div>
+
+  <div style="text-align:center; margin-top:2rem;">
+    <div id="countdown-display" style="
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 3rem;
+      font-weight: 700;
+      color: #6B705C;
+      margin-bottom: 1rem;
+      letter-spacing: 0.06em;
+    ">02:00</div>
+    <p class="text-muted mb-2">Minimum recommended break. You may take longer if needed.</p>
+    <a id="btn-test2" href="{{ url_for('test2') }}" class="btn btn-primary" style="pointer-events:none; opacity:0.45;">
+      Continue to Test 2 →
+    </a>
+  </div>
+
+</main>
+
+<script>
+  // 2-minute countdown — enables the button when it hits zero
+  var BREAK_SECONDS = 120;
+  var remaining     = BREAK_SECONDS;
+  var display       = document.getElementById("countdown-display");
+  var btn           = document.getElementById("btn-test2");
+
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+  var interval = setInterval(function () {
+    remaining--;
+    var m = Math.floor(remaining / 60);
+    var s = remaining % 60;
+    display.textContent = pad(m) + ":" + pad(s);
+
+    if (remaining <= 0) {
+      clearInterval(interval);
+      display.textContent = "00:00";
+      display.style.color = "#4a4d41";
+      btn.style.pointerEvents = "";
+      btn.style.opacity       = "";
+    }
+  }, 1000);
+</script>
+
+</body>
+</html>

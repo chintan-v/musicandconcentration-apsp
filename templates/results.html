@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Results | APSP Research</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <span class="project-label">Advanced Probability &amp; Stochastic Processes — Research Project</span>
+    <h1>Your Individual Results</h1>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Step indicator -->
+  <div class="step-indicator">
+    <div class="step-item done">① Home</div>
+    <div class="step-item done">② Test 1 — Silence</div>
+    <div class="step-item done">③ Break</div>
+    <div class="step-item done">④ Test 2 — Music</div>
+    <div class="step-item active">⑤ Results</div>
+  </div>
+
+  <!-- Thank you -->
+  <div class="card card-olive" style="margin-bottom:1.75rem;">
+    <h2>Thank you for participating!</h2>
+    <p>
+      Both tests are complete. Your responses have been saved anonymously.
+      Participant ID: <strong>{{ participant_id }}</strong>
+    </p>
+    <p>
+      The table below shows your individual performance. A final conclusion
+      about the effect of background music on concentration <strong>cannot be
+      drawn from a single participant</strong> — statistical analysis
+      (one-way ANOVA) will be performed across all participants after sufficient
+      data is collected.
+    </p>
+  </div>
+
+  <!-- Score summary cards -->
+  <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.75rem;">
+
+    <div class="card" style="flex:1; min-width:220px; text-align:center;">
+      <div class="question-meta">Test 1 — Silence (Form A)</div>
+      <div class="score-highlight">{{ t1_score }} / {{ total_q }}</div>
+      <p style="margin-top:0.4rem;">Accuracy: <strong>{{ t1_pct }}%</strong></p>
+      <p class="text-muted">Completed in {{ t1_time }}</p>
+    </div>
+
+    <div class="card" style="flex:1; min-width:220px; text-align:center;">
+      <div class="question-meta">Test 2 — Music (Form B)</div>
+      <div class="score-highlight">{{ t2_score }} / {{ total_q }}</div>
+      <p style="margin-top:0.4rem;">Accuracy: <strong>{{ t2_pct }}%</strong></p>
+      <p class="text-muted">Completed in {{ t2_time }}</p>
+    </div>
+
+  </div>
+
+  <!-- Detailed comparison table -->
+  <section>
+    <h2>Detailed Comparison</h2>
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Test 1 — Silence</th>
+          <th>Test 2 — Music</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Score (out of {{ total_q }})</td>
+          <td>{{ t1_score }}</td>
+          <td>{{ t2_score }}</td>
+        </tr>
+        <tr>
+          <td>Accuracy</td>
+          <td>{{ t1_pct }}%</td>
+          <td>{{ t2_pct }}%</td>
+        </tr>
+        <tr>
+          <td>Completion time</td>
+          <td>{{ t1_time }}</td>
+          <td>{{ t2_time }}</td>
+        </tr>
+        <tr>
+          <td>Condition</td>
+          <td>Silence</td>
+          <td>Instrumental music</td>
+        </tr>
+        <tr>
+          <td>Test form</td>
+          <td>Form A</td>
+          <td>Form B</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Comparison note -->
+  <section>
+    {% set diff = t2_score - t1_score %}
+    <div class="notice">
+      {% if diff > 0 %}
+        Your score was <strong>{{ diff }} point(s) higher</strong> on Test 2 (music)
+        than on Test 1 (silence).
+      {% elif diff < 0 %}
+        Your score was <strong>{{ diff | abs }} point(s) lower</strong> on Test 2 (music)
+        than on Test 1 (silence).
+      {% else %}
+        Your scores were <strong>identical</strong> on both tests.
+      {% endif %}
+      <br />
+      <span class="text-muted">
+        Note: Individual-level comparisons are not statistically conclusive.
+        Many factors — including question order effects, fatigue, and practice
+        effects — can influence within-person performance differences.
+        Conclusions will be drawn from the full dataset using ANOVA.
+      </span>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- Interpretation note -->
+  <section>
+    <h2>Important Note</h2>
+    <p>
+      The tests are designed to measure cognitive task performance under two
+      auditory conditions. They are <em>not</em> validated IQ tests and the
+      results should not be interpreted as a measure of intelligence, ability,
+      or academic potential. Performance is expected to vary between individuals
+      and across conditions.
+    </p>
+    <p>
+      Your data contributes to a group-level statistical analysis.
+      Thank you for your time and effort.
+    </p>
+  </section>
+
+</main>
+
+</body>
+</html>

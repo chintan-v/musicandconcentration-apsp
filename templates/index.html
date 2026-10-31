@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Background Music & Study Concentration — APSP Research</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <span class="project-label">Advanced Probability &amp; Stochastic Processes — Research Project</span>
+    <h1>Does Background Music Affect Study Concentration?</h1>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Step indicator -->
+  <div class="step-indicator">
+    <div class="step-item active">① Home</div>
+    <div class="step-item">② Test 1 — Silence</div>
+    <div class="step-item">③ Break</div>
+    <div class="step-item">④ Test 2 — Music</div>
+    <div class="step-item">⑤ Results</div>
+  </div>
+
+  <!-- Introduction -->
+  <section>
+    <h2>About This Study</h2>
+    <p>
+      This experiment is part of an ongoing academic research project examining
+      whether background music influences cognitive task performance. Specifically,
+      we use an <strong>Analysis of Variance (ANOVA)</strong> framework to compare
+      performance across two auditory conditions: <em>silence</em> and
+      <em>instrumental study music</em>.
+    </p>
+    <p>
+      You will complete <strong>two short cognitive tests</strong>. The tests
+      measure reasoning, pattern recognition, and attention — not your general
+      intelligence or IQ. There are no trick questions. Performance naturally
+      varies from day to day, so please answer as carefully as you can under
+      the conditions provided.
+    </p>
+  </section>
+
+  <!-- What to expect -->
+  <section>
+    <div class="card">
+      <h2>What to Expect</h2>
+      <p>
+        <span class="bold">Test 1</span> — Completed in <em>silence</em>.
+        20 multiple-choice questions. 20-minute time limit.
+      </p>
+      <p>
+        <span class="bold">Short Break</span> — A 2-minute rest between tests.
+      </p>
+      <p>
+        <span class="bold">Test 2</span> — Completed with <em>instrumental background music</em>.
+        20 multiple-choice questions. 20-minute time limit.
+      </p>
+      <p>
+        After both tests, you will see your individual results. The final
+        statistical analysis across all participants will be performed separately.
+      </p>
+    </div>
+  </section>
+
+  <!-- Instructions -->
+  <section>
+    <h2>Participant Instructions</h2>
+    <ol style="padding-left:1.4rem; line-height:2;">
+      <li>Find a quiet place where you will not be interrupted.</li>
+      <li>Complete Test 1 in <strong>complete silence</strong> (no music, no background noise if possible).</li>
+      <li>Take the short break between tests.</li>
+      <li>For Test 2, use the in-page music player at a <strong>comfortable, moderate volume</strong>. Use headphones if available.</li>
+      <li>Answer every question to the best of your ability. You may navigate between questions freely.</li>
+      <li>The test auto-submits when the timer reaches zero.</li>
+      <li>Do not refresh the page during a test.</li>
+    </ol>
+  </section>
+
+  <hr />
+
+  <!-- Consent form -->
+  <section>
+    <h2>Informed Consent</h2>
+    <p>
+      Before starting, please read the following and confirm your consent.
+    </p>
+
+    <div class="consent-box">
+      <p><strong>What the study involves:</strong> You will complete two cognitive tests as described above.</p>
+      <p><strong>Data collected:</strong> Your answers, scores, and time taken per test. No names, email addresses, or other identifying information are collected. You are assigned a random anonymous ID.</p>
+      <p><strong>How data will be used:</strong> Anonymised results will be analysed statistically as part of the APSP research project. Data may be included in academic reports or presentations.</p>
+      <p><strong>Withdrawal:</strong> You may close the browser at any time. Partial data will not be used if you do not complete both tests.</p>
+      <p><strong>Note:</strong> The tests are not validated psychometric instruments. Results reflect task performance under the given conditions only and should not be interpreted as a measure of intelligence or ability.</p>
+    </div>
+
+    <form action="{{ url_for('start') }}" method="POST">
+      <div class="consent-box">
+        <label>
+          <input type="checkbox" name="consent_check" id="consent_check" required />
+          <span>
+            I have read and understood the information above. I voluntarily agree to
+            participate in this study. I understand my data will be used anonymously
+            for academic research purposes.
+          </span>
+        </label>
+      </div>
+
+      <input type="hidden" name="consent" value="yes" />
+
+      <button type="submit" class="btn btn-primary" id="start-btn" disabled>
+        Start Experiment →
+      </button>
+      <p class="text-muted mt-1">The button activates once you check the consent box above.</p>
+    </form>
+  </section>
+
+</main>
+
+<script>
+  // Enable the Start button only when the consent checkbox is ticked
+  var cb  = document.getElementById("consent_check");
+  var btn = document.getElementById("start-btn");
+  cb.addEventListener("change", function () {
+    btn.disabled = !cb.checked;
+  });
+</script>
+
+</body>
+</html>
