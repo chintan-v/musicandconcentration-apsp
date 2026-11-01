@@ -124,6 +124,20 @@ def participant_exists(participant_id: str) -> bool:
 
 # ── Result helpers ────────────────────────────────────────────────────────────
 
+def send_to_google_sheet(payload: dict) -> bool:
+    """Send a test result row to Google Sheets webhook if configured."""
+    webhook_url = os.environ.get("GOOGLE_SHEET_WEBHOOK_URL")
+    if not webhook_url:
+        return False
+    try:
+        import requests
+        response = requests.post(webhook_url, json=payload, timeout=8)
+        return response.status_code in [200, 302]
+    except Exception as e:
+        print(f"Warning: Failed to sync with Google Sheet: {e}")
+        return False
+
+
 def save_result(
     participant_id: str,
     test_condition: str,
@@ -133,7 +147,8 @@ def save_result(
     incorrect_answers: int,
     completion_time: float,
 ) -> None:
-    """Insert a test result row."""
+    """Insert a test result row into SQLite and sync with Google Sheet."""
+    completed_at = datetime.utcnow().isoformat()
     conn = get_connection()
     with conn:
         conn.execute(
@@ -149,10 +164,22 @@ def save_result(
                 correct_answers,
                 incorrect_answers,
                 completion_time,
-                datetime.utcnow().isoformat(),
+                completed_at,
             ),
         )
     conn.close()
+
+    # Sync with Google Sheets
+    send_to_google_sheet({
+        "participant_id": participant_id,
+        "test_condition": test_condition,
+        "test_form": test_form,
+        "score": score,
+        "correct_answers": correct_answers,
+        "incorrect_answers": incorrect_answers,
+        "completion_time": completion_time,
+        "completed_at": completed_at,
+    })
 
 
 def get_results_for_participant(participant_id: str) -> list:

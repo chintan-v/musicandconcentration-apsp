@@ -239,6 +239,39 @@ def admin_download():
     return send_file(path, as_attachment=True, download_name="results_export.csv", mimetype="text/csv")
 
 
+@app.route("/admin/test-sheet")
+def test_sheet():
+    """Test sending a test row to Google Sheet webhook."""
+    webhook_url = os.environ.get("GOOGLE_SHEET_WEBHOOK_URL")
+    if not webhook_url:
+        return jsonify({
+            "status": "not_configured",
+            "message": "GOOGLE_SHEET_WEBHOOK_URL is not set yet in Vercel environment variables."
+        }), 400
+
+    payload = {
+        "participant_id": "TEST_DEMO",
+        "test_condition": "silence",
+        "test_form": "A",
+        "score": 20,
+        "correct_answers": 20,
+        "incorrect_answers": 0,
+        "completion_time": 120.5,
+        "completed_at": datetime.utcnow().isoformat(),
+    }
+    success = db.send_to_google_sheet(payload)
+    if success:
+        return jsonify({
+            "status": "success",
+            "message": "Test row successfully sent to your Google Sheet!"
+        })
+    else:
+        return jsonify({
+            "status": "error",
+            "message": "Could not connect to Google Sheet. Check your Webhook URL."
+        }), 500
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 @app.errorhandler(500)
