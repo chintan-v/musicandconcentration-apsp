@@ -6,6 +6,7 @@ Run with:
 Then open http://127.0.0.1:5000 in your browser.
 """
 
+import os
 import uuid
 import json
 from datetime import datetime
@@ -24,7 +25,12 @@ from flask import (
 import database as db
 from questions import FORM_A, FORM_B, ANSWER_KEY_A, ANSWER_KEY_B
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static"),
+)
 # Change this to a long random string in production
 app.secret_key = "apsp-research-secret-key-2024"
 
