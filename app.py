@@ -73,7 +73,10 @@ def start():
     session["participant_id"] = participant_id
     session["test1_done"] = False
     session["test2_done"] = False
-    db.create_participant(participant_id)
+    try:
+        db.create_participant(participant_id)
+    except Exception as e:
+        app.logger.warning(f"Could not record participant to db: {e}")
 
     return redirect(url_for("test1"))
 
@@ -231,6 +234,12 @@ def admin_download():
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
+
+@app.errorhandler(500)
+def handle_500(e):
+    import traceback
+    return f"<h3>Application Error (500)</h3><pre>{traceback.format_exc()}</pre>", 500
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port=5000)

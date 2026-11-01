@@ -3,62 +3,99 @@ database.py — Database initialisation and helper functions.
 
 Uses SQLite via Python's standard library.  No ORM required.
 The database path is relative to this file so the project is self-contained.
+Supports serverless / read-only deployment environments (e.g. Vercel, AWS Lambda).
 """
 
 import sqlite3
 import csv
 import os
+import shutil
 from datetime import datetime
 
-# ── Path ──────────────────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-if os.environ.get("VERCEL"):
-    import shutil
-    DB_DIR = "/tmp/data"
-    os.makedirs(DB_DIR, exist_ok=True)
-    DB_PATH = os.path.join(DB_DIR, "research.db")
-    seed_db = os.path.join(BASE_DIR, "data", "research.db")
-    if os.path.exists(seed_db) and not os.path.exists(DB_PATH):
+def _get_db_path() -> str:
+    """
+    Determine the database file path.
+    If the deployment environment is serverless or the local directory is read-only,
+    use a writable directory in /tmp.
+    """
+    is_serverless = any(
+        os.environ.get(k) for k in [
+            "VERCEL", "VERCEL_ENV", "VERCEL_REGION",
+            "AWS_LAMBDA_FUNCTION_NAME", "LAMBDA_TASK_ROOT"
+        ]
+    )
+
+    local_dir = os.path.join(BASE_DIR, "data")
+    is_writable = False
+    if not is_serverless:
         try:
-            shutil.copyfile(seed_db, DB_PATH)
-        except Exception:
-            pass
-else:
-    DB_PATH  = os.path.join(BASE_DIR, "data", "research.db")
+            os.makedirs(local_dir, exist_ok=True)
+            test_file = os.path.join(local_dir, ".test_write")
+            with open(test_file, "w") as f:
+                f.write("ok")
+            os.remove(test_file)
+            is_writable = True
+        except (OSError, IOError, PermissionError):
+            is_writable = False
+
+    if is_writable:
+        return os.path.join(local_dir, "research.db")
+    else:
+        tmp_dir = os.path.join("/tmp", "music_apsp_data")
+        os.makedirs(tmp_dir, exist_ok=True)
+        tmp_db = os.path.join(tmp_dir, "research.db")
+
+        # Copy seed DB if available and destination does not exist
+        if not os.path.exists(tmp_db):
+            seed = os.path.join(BASE_DIR, "data", "research.db")
+            if os.path.exists(seed):
+                try:
+                    shutil.copyfile(seed, tmp_db)
+                    os.chmod(tmp_db, 0o666)
+                except Exception:
+                    pass
+
+        return tmp_db
 
 
-def get_connection():
-    """Return a new SQLite connection with row_factory set."""
-    conn = sqlite3.connect(DB_PATH)
+def _init_schema(conn: sqlite3.Connection) -> None:
+    """Create tables if they do not already exist."""
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS participants (
+            participant_id  TEXT PRIMARY KEY,
+            consent_status  INTEGER NOT NULL DEFAULT 1,
+            created_at      TEXT    NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS test_results (
+            result_id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            participant_id    TEXT    NOT NULL REFERENCES participants(participant_id),
+            test_condition    TEXT    NOT NULL CHECK(test_condition IN ('silence','music')),
+            test_form         TEXT    NOT NULL CHECK(test_form IN ('A','B')),
+            score             INTEGER NOT NULL,
+            correct_answers   INTEGER NOT NULL,
+            incorrect_answers INTEGER NOT NULL,
+            completion_time   REAL    NOT NULL,
+            completed_at      TEXT    NOT NULL
+        );
+    """)
+
+
+def get_connection() -> sqlite3.Connection:
+    """Return a new SQLite connection with row_factory set and schema ensured."""
+    db_path = _get_db_path()
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    _init_schema(conn)
     return conn
 
 
-def init_db():
-    """Create tables if they do not already exist."""
+def init_db() -> None:
+    """Explicit database initialization."""
     conn = get_connection()
-    with conn:
-        conn.executescript("""
-            CREATE TABLE IF NOT EXISTS participants (
-                participant_id  TEXT PRIMARY KEY,
-                consent_status  INTEGER NOT NULL DEFAULT 1,
-                created_at      TEXT    NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS test_results (
-                result_id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                participant_id    TEXT    NOT NULL REFERENCES participants(participant_id),
-                test_condition    TEXT    NOT NULL CHECK(test_condition IN ('silence','music')),
-                test_form         TEXT    NOT NULL CHECK(test_form IN ('A','B')),
-                score             INTEGER NOT NULL,
-                correct_answers   INTEGER NOT NULL,
-                incorrect_answers INTEGER NOT NULL,
-                completion_time   REAL    NOT NULL,
-                completed_at      TEXT    NOT NULL
-            );
-        """)
     conn.close()
 
 
@@ -147,10 +184,9 @@ def export_to_csv(output_path: str = None) -> str:
     Returns the path of the written file.
     """
     if output_path is None:
-        if os.environ.get("VERCEL"):
-            output_path = "/tmp/data/results_export.csv"
-        else:
-            output_path = os.path.join(BASE_DIR, "data", "results_export.csv")
+        db_path = _get_db_path()
+        output_dir = os.path.dirname(db_path)
+        output_path = os.path.join(output_dir, "results_export.csv")
 
     rows = get_all_results()
     if not rows:
