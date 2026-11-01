@@ -18,6 +18,7 @@ from flask import (
     redirect,
     url_for,
     jsonify,
+    send_file,
 )
 
 import database as db
@@ -220,6 +221,13 @@ def admin_data():
     """Return all results as JSON for quick inspection."""
     rows = db.get_all_results()
     return jsonify(rows)
+
+
+@app.route("/admin/download")
+def admin_download():
+    """Download results CSV file directly."""
+    path = db.export_to_csv()
+    return send_file(path, as_attachment=True, download_name="results_export.csv", mimetype="text/csv")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────

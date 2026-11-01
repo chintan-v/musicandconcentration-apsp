@@ -12,7 +12,20 @@ from datetime import datetime
 
 # ── Path ──────────────────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH  = os.path.join(BASE_DIR, "data", "research.db")
+
+if os.environ.get("VERCEL"):
+    import shutil
+    DB_DIR = "/tmp/data"
+    os.makedirs(DB_DIR, exist_ok=True)
+    DB_PATH = os.path.join(DB_DIR, "research.db")
+    seed_db = os.path.join(BASE_DIR, "data", "research.db")
+    if os.path.exists(seed_db) and not os.path.exists(DB_PATH):
+        try:
+            shutil.copyfile(seed_db, DB_PATH)
+        except Exception:
+            pass
+else:
+    DB_PATH  = os.path.join(BASE_DIR, "data", "research.db")
 
 
 def get_connection():
@@ -134,7 +147,10 @@ def export_to_csv(output_path: str = None) -> str:
     Returns the path of the written file.
     """
     if output_path is None:
-        output_path = os.path.join(BASE_DIR, "data", "results_export.csv")
+        if os.environ.get("VERCEL"):
+            output_path = "/tmp/data/results_export.csv"
+        else:
+            output_path = os.path.join(BASE_DIR, "data", "results_export.csv")
 
     rows = get_all_results()
     if not rows:
