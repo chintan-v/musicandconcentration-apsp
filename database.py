@@ -64,14 +64,16 @@ def _init_schema(conn: sqlite3.Connection) -> None:
     """Create tables if they do not already exist."""
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS participants (
-            participant_id  TEXT PRIMARY KEY,
-            consent_status  INTEGER NOT NULL DEFAULT 1,
-            created_at      TEXT    NOT NULL
+            participant_id   TEXT PRIMARY KEY,
+            participant_name TEXT,
+            consent_status   INTEGER NOT NULL DEFAULT 1,
+            created_at       TEXT    NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS test_results (
             result_id         INTEGER PRIMARY KEY AUTOINCREMENT,
             participant_id    TEXT    NOT NULL REFERENCES participants(participant_id),
+            participant_name  TEXT,
             test_condition    TEXT    NOT NULL CHECK(test_condition IN ('silence','music')),
             test_form         TEXT    NOT NULL CHECK(test_form IN ('A','B')),
             score             INTEGER NOT NULL,
@@ -81,6 +83,14 @@ def _init_schema(conn: sqlite3.Connection) -> None:
             completed_at      TEXT    NOT NULL
         );
     """)
+    try:
+        conn.execute("ALTER TABLE participants ADD COLUMN participant_name TEXT")
+    except Exception:
+        pass
+    try:
+        conn.execute("ALTER TABLE test_results ADD COLUMN participant_name TEXT")
+    except Exception:
+        pass
 
 
 def get_connection() -> sqlite3.Connection:
@@ -101,14 +111,14 @@ def init_db() -> None:
 
 # ── Participant helpers ───────────────────────────────────────────────────────
 
-def create_participant(participant_id: str) -> None:
-    """Insert a new participant row."""
+def create_participant(participant_id: str, participant_name: str = "Anonymous") -> None:
+    """Insert a new participant row with name."""
     conn = get_connection()
     with conn:
         conn.execute(
-            "INSERT OR IGNORE INTO participants (participant_id, consent_status, created_at) "
-            "VALUES (?, 1, ?)",
-            (participant_id, datetime.utcnow().isoformat()),
+            "INSERT OR IGNORE INTO participants (participant_id, participant_name, consent_status, created_at) "
+            "VALUES (?, ?, 1, ?)",
+            (participant_id, participant_name, datetime.utcnow().isoformat()),
         )
     conn.close()
 
@@ -146,6 +156,7 @@ def save_result(
     correct_answers: int,
     incorrect_answers: int,
     completion_time: float,
+    participant_name: str = "Anonymous",
 ) -> None:
     """Insert a test result row into SQLite and sync with Google Sheet."""
     completed_at = datetime.utcnow().isoformat()
@@ -153,11 +164,12 @@ def save_result(
     with conn:
         conn.execute(
             """INSERT INTO test_results
-               (participant_id, test_condition, test_form, score,
+               (participant_id, participant_name, test_condition, test_form, score,
                 correct_answers, incorrect_answers, completion_time, completed_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 participant_id,
+                participant_name,
                 test_condition,
                 test_form,
                 score,
@@ -172,6 +184,7 @@ def save_result(
     # Sync with Google Sheets
     send_to_google_sheet({
         "participant_id": participant_id,
+        "participant_name": participant_name,
         "test_condition": test_condition,
         "test_form": test_form,
         "score": score,

@@ -75,12 +75,14 @@ def start():
     if consent != "yes":
         return redirect(url_for("index"))
 
+    participant_name = request.form.get("participant_name", "").strip() or "Anonymous"
     participant_id = str(uuid.uuid4())[:8].upper()
     session["participant_id"] = participant_id
+    session["participant_name"] = participant_name
     session["test1_done"] = False
     session["test2_done"] = False
     try:
-        db.create_participant(participant_id)
+        db.create_participant(participant_id, participant_name)
     except Exception as e:
         app.logger.warning(f"Could not record participant to db: {e}")
 
@@ -108,13 +110,14 @@ def submit_test1():
     score, correct, incorrect = _score_answers(submitted, ANSWER_KEY_A)
 
     db.save_result(
-        participant_id  = session["participant_id"],
-        test_condition  = "silence",
-        test_form       = "A",
-        score           = score,
-        correct_answers = correct,
+        participant_id    = session["participant_id"],
+        participant_name  = session.get("participant_name", "Anonymous"),
+        test_condition    = "silence",
+        test_form         = "A",
+        score             = score,
+        correct_answers   = correct,
         incorrect_answers = incorrect,
-        completion_time = elapsed,
+        completion_time   = elapsed,
     )
 
     session["test1_done"]  = True
@@ -154,13 +157,14 @@ def submit_test2():
     score, correct, incorrect = _score_answers(submitted, ANSWER_KEY_B)
 
     db.save_result(
-        participant_id  = session["participant_id"],
-        test_condition  = "music",
-        test_form       = "B",
-        score           = score,
-        correct_answers = correct,
+        participant_id    = session["participant_id"],
+        participant_name  = session.get("participant_name", "Anonymous"),
+        test_condition    = "music",
+        test_form         = "B",
+        score             = score,
+        correct_answers   = correct,
         incorrect_answers = incorrect,
-        completion_time = elapsed,
+        completion_time   = elapsed,
     )
 
     session["test2_done"]  = True
@@ -197,7 +201,8 @@ def results():
 
     return render_template(
         "results.html",
-        participant_id = session["participant_id"],
+        participant_id   = session["participant_id"],
+        participant_name = session.get("participant_name", "Anonymous"),
         t1_score   = t1_score,
         t2_score   = t2_score,
         t1_pct     = t1_pct,

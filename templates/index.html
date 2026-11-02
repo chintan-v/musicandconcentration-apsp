@@ -83,29 +83,46 @@
 
   <hr />
 
-  <!-- Consent form -->
+  <!-- Participant Registration & Consent -->
   <section>
-    <h2>Informed Consent</h2>
+    <h2>Participant Registration & Consent</h2>
     <p>
-      Before starting, please read the following and confirm your consent.
+      Please enter your full name and confirm your consent before starting the experiment.
     </p>
 
-    <div class="consent-box">
-      <p><strong>What the study involves:</strong> You will complete two cognitive tests as described above.</p>
-      <p><strong>Data collected:</strong> Your answers, scores, and time taken per test. No names, email addresses, or other identifying information are collected. You are assigned a random anonymous ID.</p>
-      <p><strong>How data will be used:</strong> Anonymised results will be analysed statistically as part of the APSP research project. Data may be included in academic reports or presentations.</p>
-      <p><strong>Withdrawal:</strong> You may close the browser at any time. Partial data will not be used if you do not complete both tests.</p>
-      <p><strong>Note:</strong> The tests are not validated psychometric instruments. Results reflect task performance under the given conditions only and should not be interpreted as a measure of intelligence or ability.</p>
-    </div>
+    <form action="{{ url_for('start') }}" method="POST" id="start-form">
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <label for="participant_name" style="display:block; font-weight:600; margin-bottom:0.5rem; color:#2d2e29; font-size:1rem;">
+          Your Full Name <span style="color:#b22222;">*</span>
+        </label>
+        <input 
+          type="text" 
+          id="participant_name" 
+          name="participant_name" 
+          class="form-input" 
+          placeholder="e.g. John Doe" 
+          required 
+          autocomplete="name"
+        />
+        <p class="text-muted" style="margin-top:0.4rem; font-size:0.85rem; margin-bottom:0;">
+          Your name will be recorded alongside your test performance.
+        </p>
+      </div>
 
-    <form action="{{ url_for('start') }}" method="POST">
+      <div class="consent-box">
+        <p><strong>What the study involves:</strong> You will complete two cognitive tests as described above.</p>
+        <p><strong>Data collected:</strong> Your name, test answers, scores, and completion time per test.</p>
+        <p><strong>How data will be used:</strong> Results will be analysed statistically as part of the APSP research project.</p>
+        <p><strong>Withdrawal:</strong> You may close the browser at any time. Partial data will not be used if you do not complete both tests.</p>
+        <p><strong>Note:</strong> The tests are not validated psychometric instruments. Results reflect task performance under the given conditions only and should not be interpreted as a measure of intelligence or ability.</p>
+      </div>
+
       <div class="consent-box">
         <label>
           <input type="checkbox" name="consent_check" id="consent_check" required />
           <span>
             I have read and understood the information above. I voluntarily agree to
-            participate in this study. I understand my data will be used anonymously
-            for academic research purposes.
+            participate in this study and allow my responses to be recorded.
           </span>
         </label>
       </div>
@@ -115,19 +132,36 @@
       <button type="submit" class="btn btn-primary" id="start-btn" disabled>
         Start Experiment →
       </button>
-      <p class="text-muted mt-1">The button activates once you check the consent box above.</p>
+      <p class="text-muted mt-1" id="start-hint">Please enter your name and check the consent box to begin.</p>
     </form>
   </section>
 
 </main>
 
 <script>
-  // Enable the Start button only when the consent checkbox is ticked
-  var cb  = document.getElementById("consent_check");
-  var btn = document.getElementById("start-btn");
-  cb.addEventListener("change", function () {
-    btn.disabled = !cb.checked;
-  });
+  var nameInput = document.getElementById("participant_name");
+  var consentCb = document.getElementById("consent_check");
+  var startBtn  = document.getElementById("start-btn");
+  var startHint = document.getElementById("start-hint");
+
+  function validateForm() {
+    var hasName = nameInput.value.trim().length > 0;
+    var hasConsent = consentCb.checked;
+    startBtn.disabled = !(hasName && hasConsent);
+
+    if (!hasName && !hasConsent) {
+      startHint.textContent = "Please enter your name and check the consent box to begin.";
+    } else if (!hasName) {
+      startHint.textContent = "Please enter your name above to begin.";
+    } else if (!hasConsent) {
+      startHint.textContent = "Please check the consent box above to begin.";
+    } else {
+      startHint.textContent = "Ready! Click above to start Test 1.";
+    }
+  }
+
+  nameInput.addEventListener("input", validateForm);
+  consentCb.addEventListener("change", validateForm);
 </script>
 
 </body>
