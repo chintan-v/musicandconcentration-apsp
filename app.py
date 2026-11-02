@@ -256,6 +256,7 @@ def test_sheet():
 
     payload = {
         "participant_id": "TEST_DEMO",
+        "participant_name": "Demo Student",
         "test_condition": "silence",
         "test_form": "A",
         "score": 20,
