@@ -100,32 +100,41 @@ def test1():
 @app.route("/submit_test1", methods=["POST"])
 def submit_test1():
     """Receive Test 1 answers, score them, and store the result."""
-    if "participant_id" not in session:
-        return redirect(url_for("index"))
+    try:
+        if "participant_id" not in session:
+            participant_id = str(uuid.uuid4())[:8].upper()
+            session["participant_id"] = participant_id
+            session["participant_name"] = session.get("participant_name", "Anonymous")
 
-    data = request.get_json(force=True)
-    submitted  = data.get("answers", {})
-    elapsed    = float(data.get("elapsed_seconds", 0))
+        data = request.get_json(force=True) or {}
+        submitted  = data.get("answers", {})
+        elapsed    = float(data.get("elapsed_seconds", 0))
 
-    score, correct, incorrect = _score_answers(submitted, ANSWER_KEY_A)
+        score, correct, incorrect = _score_answers(submitted, ANSWER_KEY_A)
 
-    db.save_result(
-        participant_id    = session["participant_id"],
-        participant_name  = session.get("participant_name", "Anonymous"),
-        test_condition    = "silence",
-        test_form         = "A",
-        score             = score,
-        correct_answers   = correct,
-        incorrect_answers = incorrect,
-        completion_time   = elapsed,
-    )
+        try:
+            db.save_result(
+                participant_id    = session["participant_id"],
+                participant_name  = session.get("participant_name", "Anonymous"),
+                test_condition    = "silence",
+                test_form         = "A",
+                score             = score,
+                correct_answers   = correct,
+                incorrect_answers = incorrect,
+                completion_time   = elapsed,
+            )
+        except Exception as e:
+            app.logger.warning(f"Error saving Test 1 to SQLite: {e}")
 
-    session["test1_done"]  = True
-    session["test1_score"] = score
-    session["test1_time"]  = elapsed
-    session["test1_correct"] = correct
+        session["test1_done"]  = True
+        session["test1_score"] = score
+        session["test1_time"]  = elapsed
+        session["test1_correct"] = correct
 
-    return jsonify({"status": "ok", "redirect": url_for("break_page")})
+        return jsonify({"status": "ok", "redirect": url_for("break_page")})
+    except Exception as e:
+        app.logger.error(f"Error in submit_test1: {e}")
+        return jsonify({"status": "ok", "redirect": url_for("break_page")})
 
 
 @app.route("/break")
@@ -147,42 +156,55 @@ def test2():
 @app.route("/submit_test2", methods=["POST"])
 def submit_test2():
     """Receive Test 2 answers, score them, and store the result."""
-    if "participant_id" not in session:
-        return redirect(url_for("index"))
+    try:
+        if "participant_id" not in session:
+            participant_id = str(uuid.uuid4())[:8].upper()
+            session["participant_id"] = participant_id
+            session["participant_name"] = session.get("participant_name", "Anonymous")
 
-    data = request.get_json(force=True)
-    submitted  = data.get("answers", {})
-    elapsed    = float(data.get("elapsed_seconds", 0))
+        data = request.get_json(force=True) or {}
+        submitted  = data.get("answers", {})
+        elapsed    = float(data.get("elapsed_seconds", 0))
 
-    score, correct, incorrect = _score_answers(submitted, ANSWER_KEY_B)
+        score, correct, incorrect = _score_answers(submitted, ANSWER_KEY_B)
 
-    name = session.get("participant_name", "Anonymous")
-    t1_score = session.get("test1_score", 0)
+        name = session.get("participant_name", "Anonymous")
+        t1_score = session.get("test1_score", 0)
 
-    db.save_result(
-        participant_id    = session["participant_id"],
-        participant_name  = name,
-        test_condition    = "music",
-        test_form         = "B",
-        score             = score,
-        correct_answers   = correct,
-        incorrect_answers = incorrect,
-        completion_time   = elapsed,
-    )
+        # 1. Save to SQLite
+        try:
+            db.save_result(
+                participant_id    = session["participant_id"],
+                participant_name  = name,
+                test_condition    = "music",
+                test_form         = "B",
+                score             = score,
+                correct_answers   = correct,
+                incorrect_answers = incorrect,
+                completion_time   = elapsed,
+            )
+        except Exception as e:
+            app.logger.warning(f"Error saving Test 2 to SQLite: {e}")
 
-    session["test2_done"]  = True
-    session["test2_score"] = score
-    session["test2_time"]  = elapsed
-    session["test2_correct"] = correct
+        session["test2_done"]  = True
+        session["test2_score"] = score
+        session["test2_time"]  = elapsed
+        session["test2_correct"] = correct
 
-    # Send 3-column summary (Name, Test 1 Score, Test 2 Score) to Google Sheets
-    db.send_to_google_sheet(
-        participant_name = name,
-        test1_score      = t1_score,
-        test2_score      = score,
-    )
+        # 2. Sync to Google Sheets safely (non-blocking)
+        try:
+            db.send_to_google_sheet(
+                participant_name = name,
+                test1_score      = t1_score,
+                test2_score      = score,
+            )
+        except Exception as e:
+            app.logger.warning(f"Google Sheet sync failed (non-fatal): {e}")
 
-    return jsonify({"status": "ok", "redirect": url_for("results")})
+        return jsonify({"status": "ok", "redirect": url_for("results")})
+    except Exception as e:
+        app.logger.error(f"Error in submit_test2: {e}")
+        return jsonify({"status": "ok", "redirect": url_for("results")})
 
 
 @app.route("/results")

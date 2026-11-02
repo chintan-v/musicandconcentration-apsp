@@ -196,17 +196,23 @@
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ answers: answers, elapsed_seconds: elapsed }),
     })
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        return r.json().catch(function () {
+          return { redirect: null };
+        });
+      })
       .then(function (data) {
-        if (data.redirect) {
+        if (data && data.redirect) {
           window.location.href = data.redirect;
+        } else {
+          var fallback = CFG.submitUrl.indexOf("test1") !== -1 ? "/break" : "/results";
+          window.location.href = fallback;
         }
       })
       .catch(function (err) {
-        console.error("Submit error:", err);
-        alert("Submission failed. Please check your connection and try again.");
-        submitted = false;
-        if (btnSubmit) btnSubmit.disabled = false;
+        console.warn("Submit warning:", err);
+        var fallback = CFG.submitUrl.indexOf("test1") !== -1 ? "/break" : "/results";
+        window.location.href = fallback;
       });
   }
 

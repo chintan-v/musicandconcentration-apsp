@@ -146,7 +146,7 @@ def send_to_google_sheet(participant_name: str, test1_score: int, test2_score: i
             "test1_score": test1_score,
             "test2_score": test2_score,
         }
-        response = requests.post(webhook_url, json=payload, timeout=8)
+        response = requests.post(webhook_url, json=payload, timeout=3)
         return response.status_code in [200, 302]
     except Exception as e:
         print(f"Warning: Failed to sync with Google Sheet: {e}")
