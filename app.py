@@ -156,9 +156,12 @@ def submit_test2():
 
     score, correct, incorrect = _score_answers(submitted, ANSWER_KEY_B)
 
+    name = session.get("participant_name", "Anonymous")
+    t1_score = session.get("test1_score", 0)
+
     db.save_result(
         participant_id    = session["participant_id"],
-        participant_name  = session.get("participant_name", "Anonymous"),
+        participant_name  = name,
         test_condition    = "music",
         test_form         = "B",
         score             = score,
@@ -171,6 +174,13 @@ def submit_test2():
     session["test2_score"] = score
     session["test2_time"]  = elapsed
     session["test2_correct"] = correct
+
+    # Send 3-column summary (Name, Test 1 Score, Test 2 Score) to Google Sheets
+    db.send_to_google_sheet(
+        participant_name = name,
+        test1_score      = t1_score,
+        test2_score      = score,
+    )
 
     return jsonify({"status": "ok", "redirect": url_for("results")})
 
@@ -254,18 +264,11 @@ def test_sheet():
             "message": "GOOGLE_SHEET_WEBHOOK_URL is not set yet in Vercel environment variables."
         }), 400
 
-    payload = {
-        "participant_id": "TEST_DEMO",
-        "participant_name": "Demo Student",
-        "test_condition": "silence",
-        "test_form": "A",
-        "score": 20,
-        "correct_answers": 20,
-        "incorrect_answers": 0,
-        "completion_time": 120.5,
-        "completed_at": datetime.utcnow().isoformat(),
-    }
-    success = db.send_to_google_sheet(payload)
+    success = db.send_to_google_sheet(
+        participant_name = "Demo Student",
+        test1_score      = 18,
+        test2_score      = 19,
+    )
     if success:
         return jsonify({
             "status": "success",

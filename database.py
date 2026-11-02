@@ -134,13 +134,18 @@ def participant_exists(participant_id: str) -> bool:
 
 # ── Result helpers ────────────────────────────────────────────────────────────
 
-def send_to_google_sheet(payload: dict) -> bool:
-    """Send a test result row to Google Sheets webhook if configured."""
+def send_to_google_sheet(participant_name: str, test1_score: int, test2_score: int) -> bool:
+    """Send clean 3-column summary (Name, Test 1 Score, Test 2 Score) to Google Sheets."""
     webhook_url = os.environ.get("GOOGLE_SHEET_WEBHOOK_URL")
     if not webhook_url:
         return False
     try:
         import requests
+        payload = {
+            "participant_name": participant_name,
+            "test1_score": test1_score,
+            "test2_score": test2_score,
+        }
         response = requests.post(webhook_url, json=payload, timeout=8)
         return response.status_code in [200, 302]
     except Exception as e:
@@ -181,18 +186,7 @@ def save_result(
         )
     conn.close()
 
-    # Sync with Google Sheets
-    send_to_google_sheet({
-        "participant_id": participant_id,
-        "participant_name": participant_name,
-        "test_condition": test_condition,
-        "test_form": test_form,
-        "score": score,
-        "correct_answers": correct_answers,
-        "incorrect_answers": incorrect_answers,
-        "completion_time": completion_time,
-        "completed_at": completed_at,
-    })
+    # Sync to Google Sheets happens after Test 2 completes
 
 
 def get_results_for_participant(participant_id: str) -> list:
